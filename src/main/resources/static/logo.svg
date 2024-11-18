@@ -1,0 +1,99 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Circle -->
+    <circle cx="20" cy="20" r="20" fill="#4F46E5"/>
+
+    <!-- Robot Head Base -->
+    <path d="M10 14 h20 v16 h-20 z"
+          fill="#818CF8"
+          stroke="white"
+          stroke-width="1.5"/>
+
+    <!-- Digital Brain Circuit Lines -->
+    <path d="M13 20 h14 M13 24 h14 M15 20 v4 M21 20 v4 M27 20 v4"
+          stroke="white"
+          stroke-width="1"
+          stroke-linecap="round"/>
+
+    <!-- AI Eye (Left) -->
+    <circle cx="15" cy="17" r="2" fill="white"/>
+    <circle cx="15" cy="17" r="1" fill="#4F46E5">
+        <animate attributeName="opacity"
+                 values="1;0.5;1"
+                 dur="2s"
+                 repeatCount="indefinite"/>
+    </circle>
+
+    <!-- AI Eye (Right) -->
+    <circle cx="25" cy="17" r="2" fill="white"/>
+    <circle cx="25" cy="17" r="1" fill="#4F46E5">
+        <animate attributeName="opacity"
+                 values="1;0.5;1"
+                 dur="2s"
+                 repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Data Visualization Elements -->
+    <g transform="translate(12, 28)">
+        <!-- Mini Bar Chart -->
+        <rect x="0" y="0" width="2" height="4" fill="white"/>
+        <rect x="3" y="2" width="2" height="2" fill="white"/>
+        <rect x="6" y="1" width="2" height="3" fill="white"/>
+    </g>
+
+    <!-- Antenna -->
+    <path d="M20 8 v6 M17 8 h6"
+          stroke="white"
+          stroke-width="1.5"
+          stroke-linecap="round"/>
+    <circle cx="20" cy="7" r="2" fill="white">
+        <animate attributeName="opacity"
+                 values="1;0.5;1"
+                 dur="1.5s"
+                 repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Circuit Board Pattern -->
+    <path d="M8 20 h2 M8 24 h2 M30 20 h2 M30 24 h2"
+          stroke="white"
+          stroke-width="1"
+          stroke-linecap="round"/>
+
+    <!-- Outer Ring with Gradient -->
+    <circle cx="20" cy="20" r="19"
+            stroke="url(#gradient)"
+            stroke-width="1.5"
+            fill="none"/>
+
+    <!-- Gradient Definition -->
+    <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#818CF8;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#4F46E5;stop-opacity:1" />
+        </linearGradient>
+
+        <!-- Pulse Animation -->
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+            <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+        </filter>
+    </defs>
+
+    <!-- Animated Pulse Ring -->
+    <circle cx="20" cy="20" r="18"
+            stroke="white"
+            stroke-width="0.5"
+            fill="none"
+            opacity="0.5">
+        <animate attributeName="r"
+                 values="18;19;18"
+                 dur="2s"
+                 repeatCount="indefinite"/>
+        <animate attributeName="opacity"
+                 values="0.5;0.1;0.5"
+                 dur="2s"
+                 repeatCount="indefinite"/>
+    </circle>
+</svg>
