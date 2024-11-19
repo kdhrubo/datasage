@@ -95,6 +95,10 @@
              hx-trigger="load"
              hx-swap="innerHTML">
           <!-- Messages will be loaded here -->
+          <div id="messages">
+
+          </div>
+
         </div>
       </div>
     </div>
@@ -103,16 +107,16 @@
     <div class="border-t border-gray-200 p-4">
       <div class="max-w-4xl mx-auto">
         <form class="flex items-center space-x-3"
-              hx-post="/api/messages"
+              hx-post="/query/w-1"
               hx-target="#messages"
               hx-swap="beforeend">
           <input type="text"
-                 name="message"
+                 name="question"
                  placeholder="Type your query here..."
                  class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
           <button type="submit"
                   class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-            Send
+            Ask
           </button>
         </form>
       </div>

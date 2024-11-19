@@ -32,7 +32,7 @@ public class TableMetadataService {
             ,"sqlserver", "jdbc:sqlserver://%s:%d;databaseName=%s"
         ,"oracle", "jdbc:oracle:thin:@%s:%d:%s");
 
-    private JdbcTemplate createJdbcTemplate(String workspaceId) {
+    public JdbcTemplate createJdbcTemplate(String workspaceId) {
 
         Workspace workspace = this.workspaceService.findById(workspaceId);
 
@@ -227,5 +227,93 @@ public class TableMetadataService {
         return new ArrayList<>(indexMap.values());
     }
 
+    public String getWorkspaceSchemaInfo(String workspaceId) {
+        List<TableMetadata> tableMetadata = getAllTablesMetadata(workspaceId);
+
+        return formatSchemaInfoForLLM(tableMetadata);
+    }
+
+    private String formatSchemaInfoForLLM(List<TableMetadata> tables) {
+        StringBuilder schema = new StringBuilder();
+        schema.append("Database Schema Definition:\n\n");
+
+        // First, list all tables with their descriptions
+        schema.append("Available Tables:\n");
+        for (TableMetadata table : tables) {
+            schema.append("- ").append(table.getName());
+            if (table.getComment() != null) {
+                schema.append(" (").append(table.getComment()).append(")");
+            }
+            schema.append("\n");
+        }
+        schema.append("\n");
+
+        // Then, provide detailed information for each table
+        for (TableMetadata table : tables) {
+            schema.append("Table: ").append(table.getName()).append("\n");
+            if (table.getComment() != null) {
+                schema.append("Description: ").append(table.getComment()).append("\n");
+            }
+
+            // Primary Keys
+            if (!table.getPrimaryKeys().isEmpty()) {
+                schema.append("Primary Key(s): ")
+                        .append(String.join(", ", table.getPrimaryKeys()))
+                        .append("\n");
+            }
+
+            // Columns with their details
+            schema.append("Columns:\n");
+            for (ColumnMetadata column : table.getColumns()) {
+                schema.append("  * ").append(column.getName())
+                        .append(" (").append(column.getType());
+
+                if (column.getSize() != null) {
+                    schema.append("(").append(column.getSize()).append(")");
+                }
+                schema.append(")");
+
+                List<String> constraints = new ArrayList<>();
+                if (!column.getNullable()) {
+                    constraints.add("NOT NULL");
+                }
+                if (table.getPrimaryKeys().contains(column.getName())) {
+                    constraints.add("PRIMARY KEY");
+                }
+
+                if (!constraints.isEmpty()) {
+                    schema.append(" [").append(String.join(", ", constraints)).append("]");
+                }
+
+                if (column.getComment() != null) {
+                    schema.append(" - ").append(column.getComment());
+                }
+                schema.append("\n");
+            }
+
+            // Foreign Key Relationships
+            if (!table.getForeignKeys().isEmpty()) {
+                schema.append("Relationships:\n");
+                for (ForeignKeyMetadata fk : table.getForeignKeys()) {
+                    schema.append("  * ")
+                            .append(table.getName()).append(".").append(fk.getColumnName())
+                            .append(" → ")
+                            .append(fk.getReferenceTable()).append(".").append(fk.getReferenceColumn())
+                            .append("\n");
+                }
+            }
+            schema.append("\n");
+        }
+
+        // Add common query examples
+        //schema.append("Query Guidelines:\n");
+        //schema.append("1. Always use table aliases for clarity (e.g., 'users u')\n");
+        //schema.append("2. Qualify column names with table aliases (e.g., 'u.user_id')\n");
+        //schema.append("3. Use proper JOIN syntax with ON conditions\n");
+        //schema.append("4. Include appropriate WHERE clauses for filtering\n");
+        //schema.append("5. Avoid SELECT *; specify needed columns\n");
+
+        return schema.toString();
+    }
 
 }
