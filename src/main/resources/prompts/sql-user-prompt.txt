@@ -1,0 +1,5 @@
+Convert this question into a SQL query following all security rules:
+{question}
+
+Available tables and their schemas:
+{schema} 

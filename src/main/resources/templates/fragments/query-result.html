@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+    <!-- SQL Query Display -->
+    <div th:fragment="sql-query" class="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Generated SQL</h2>
+        <div class="bg-gray-50 rounded p-4">
+            <pre class="text-sm text-gray-700 whitespace-pre-wrap" th:text="${sqlQuery}"></pre>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div th:fragment="results" class="query-result bg-white rounded-lg shadow-sm p-3">
+        <!-- Timestamp -->
+        <div class="timestamp" th:text="${#temporals.format(#temporals.createNow(), 'HH:mm:ss')}">
+        </div>
+
+        <!-- SQL Query -->
+        <div class="sql-query" th:if="${sqlQuery != null}">
+            <span th:text="${sqlQuery}"></span>
+        </div>
+
+        <!-- Result Count -->
+        <div class="result-count" th:if="${results != null}">
+            Showing <span th:text="${results.size()}"></span> results
+        </div>
+
+        <!-- Results Table -->
+        <div class="table-container" th:if="${results != null and !results.empty}">
+            <table>
+                <thead>
+                    <tr>
+                        <th th:each="column : ${results[0].keySet()}" 
+                            th:text="${column}">
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="row : ${results}">
+                        <td th:each="column : ${row.keySet()}" 
+                            th:text="${row.get(column)}">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- No Results Message -->
+        <div th:if="${results != null and results.empty}" 
+             class="text-sm text-gray-500 text-center py-2">
+            No results found
+        </div>
+
+        <!-- Error Message -->
+        <div th:if="${error != null}" 
+             class="text-sm text-red-600 bg-red-50 p-2 rounded">
+            <span th:text="${error}"></span>
+        </div>
+    </div>
+</body>
+</html> 
