@@ -1,60 +1,451 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
-    <!-- SQL Query Display -->
-    <div th:fragment="sql-query" class="bg-white shadow rounded-lg p-6 mb-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Generated SQL</h2>
-        <div class="bg-gray-50 rounded p-4">
-            <pre class="text-sm text-gray-700 whitespace-pre-wrap" th:text="${sqlQuery}"></pre>
+
+
+
+
+    <!-- Results Panel -->
+    <div th:fragment="results" 
+         class="query-result bg-white rounded-lg shadow-sm" 
+         x-data="{ isCollapsed: false }" 
+         x-init="$el.scrollTop = 0">
+
+
+
+
+        <!-- Version 3: Top Border Style -->
+
+        <div class="mb-3 p-3 border-t-2 border-blue-400 bg-blue-50">
+            <div class="text-xs text-blue-500 font-medium mb-1">Question</div>
+            <div class="text-sm text-blue-700 font-medium leading-relaxed">
+                <span th:text="${question}"></span>
+            </div>
+        </div>
+
+        
+        <!-- Top Action Bar -->
+        <div class="p-3 border-b flex items-center justify-between">
+            <div class="text-xs text-gray-500">
+                <span th:text="${#temporals.format(timestamp, 'HH:mm:ss')}"></span>
+                <span class="mx-2">•</span>
+                <span th:text="${#lists.size(results)} + ' results'"></span>
+            </div>
+            
+            <!-- Collapse Toggle -->
+            <button @click="isCollapsed = !isCollapsed"
+                    class="p-1 hover:bg-gray-100 rounded-md transition-colors duration-200">
+                <svg class="h-4 w-4 text-gray-500 transition-transform duration-200"
+                     :class="{ 'rotate-180': isCollapsed }"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Results Content -->
+        <div x-show="!isCollapsed"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 transform -translate-y-2"
+             x-transition:enter-end="opacity-100 transform translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 transform translate-y-0"
+             x-transition:leave-end="opacity-0 transform -translate-y-2"
+             class="results-content p-3">
+            
+            <!-- Results Table -->
+            <div class="overflow-x-auto" th:if="${not #lists.isEmpty(results)}">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <!-- Table Headers -->
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <!-- Get headers from the first result's keys -->
+                            <th th:each="entry : ${results[0]}"
+                                class="px-3 py-2 text-left text-[11px] font-medium text-gray-500 uppercase tracking-wider sticky top-0 bg-gray-50">
+                                [[${entry.key}]]
+                            </th>
+                        </tr>
+                    </thead>
+                    <!-- Table Body -->
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <!-- Iterate through each result map -->
+                        <tr th:each="row : ${results}">
+                            <!-- Iterate through each entry in the map -->
+                            <td th:each="entry : ${row}"
+                                class="px-3 py-2 text-xs text-gray-900 whitespace-nowrap">
+                                <!-- Handle different value types -->
+                                <span th:with="value=${entry?.value}"
+                                      th:text="${value}">
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(results)}" 
+                 class="empty-state">
+                <p>No results found</p>
+            </div>
+        </div>
+
+        <!-- Bottom Action Bar -->
+        <div class="p-3 border-t">
+            <th:block th:replace="~{fragments/action-links :: links}"></th:block>
         </div>
     </div>
 
-    <!-- Results Table -->
-    <div th:fragment="results" class="query-result bg-white rounded-lg shadow-sm p-3">
-        <!-- Timestamp -->
-        <div class="timestamp" th:text="${#temporals.format(#temporals.createNow(), 'HH:mm:ss')}">
-        </div>
+    <!-- Create a separate fragment for action links -->
+    <div th:fragment="action-links">
+        <!-- Add to Favorite Button -->
+        <button 
+            th:if="${queryId != null}"
+            class="action-link favorite-btn"
+            th:classappend="${isFavorite ? 'text-amber-600' : 'text-gray-500'}"
+            hx-post="@{/api/query/favorite}"
+            hx-vals="{&quot;queryId&quot;: ${queryId}}"
+            hx-trigger="click"
+            hx-swap="outerHTML"
+            hx-target="this">
+            <span class="flex items-center gap-1">
+                <svg class="h-3 w-3" 
+                     th:classappend="${isFavorite ? 'text-amber-400 fill-current' : 'text-gray-400'}"
+                     viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+                <span th:text="${isFavorite ? 'Favorited' : 'Add to favorites'}"></span>
+            </span>
+        </button>
 
-        <!-- SQL Query -->
-        <div class="sql-query" th:if="${sqlQuery != null}">
-            <span th:text="${sqlQuery}"></span>
-        </div>
+        <span class="text-gray-300 select-none">•</span>
 
-        <!-- Result Count -->
-        <div class="result-count" th:if="${results != null}">
-            Showing <span th:text="${results.size()}"></span> results
-        </div>
+        <!-- Show SQL Button -->
+        <button 
+            class="action-link text-purple-600 hover:text-purple-700"
+            @click="$dispatch('toggle-sql')"
+            x-data>
+            <span class="flex items-center gap-1">
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                </svg>
+                <span x-text="showSql ? 'Hide SQL' : 'Show SQL'">Show SQL</span>
+            </span>
+            <!-- SQL Preview Panel -->
+            <div x-show="showSql"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform -translate-y-2"
+                 x-transition:enter-end="opacity-100 transform translate-y-0"
+                 x-transition:leave="transition ease-in duration-150"
+                 x-transition:leave-start="opacity-100 transform translate-y-0"
+                 x-transition:leave-end="opacity-0 transform -translate-y-2"
+                 class="absolute left-0 mt-2 w-full max-w-2xl bg-gray-800 rounded-md shadow-lg p-4 z-20">
+                <pre class="text-[11px] text-gray-200 font-mono whitespace-pre-wrap">
+                    <code th:text="${sqlQuery}"></code>
+                </pre>
+            </div>
+        </button>
 
-        <!-- Results Table -->
-        <div class="table-container" th:if="${results != null and !results.empty}">
-            <table>
-                <thead>
-                    <tr>
-                        <th th:each="column : ${results[0].keySet()}" 
-                            th:text="${column}">
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="row : ${results}">
-                        <td th:each="column : ${row.keySet()}" 
-                            th:text="${row.get(column)}">
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <span class="text-gray-300 select-none">•</span>
 
-        <!-- No Results Message -->
-        <div th:if="${results != null and results.empty}" 
-             class="text-sm text-gray-500 text-center py-2">
-            No results found
-        </div>
+        <!-- Export CSV Link -->
+        <button 
+            class="action-link text-emerald-600 hover:text-emerald-700"
+            hx-get="@{/api/query/export/csv}"
+            hx-trigger="click"
+            hx-target="#download-frame">
+            <span class="flex items-center gap-1">
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Export CSV
+            </span>
+        </button>
 
-        <!-- Error Message -->
-        <div th:if="${error != null}" 
-             class="text-sm text-red-600 bg-red-50 p-2 rounded">
-            <span th:text="${error}"></span>
+        <span class="text-gray-300 select-none">•</span>
+
+        <!-- Save Query Button -->
+        <button 
+            class="action-link text-indigo-600 hover:text-indigo-700"
+            @click="$dispatch('open-save-modal')"
+            x-data>
+            <span class="flex items-center gap-1">
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                </svg>
+                Save Query
+            </span>
+        </button>
+
+        <span class="text-gray-300 select-none">•</span>
+
+        <!-- Charts Drop-up -->
+        <div class="relative" x-data="{ open: false }">
+            <button 
+                @click="open = !open"
+                @click.away="open = false"
+                class="action-link text-blue-600 hover:text-blue-700">
+                <span class="flex items-center gap-1">
+                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M8 13v-1m4 1v-3m4 3V8M12 21l9-9-9-9-9 9 9 9z"/>
+                    </svg>
+                    Visualize
+                    <svg class="h-2.5 w-2.5 transition-transform duration-200" 
+                         :class="{ 'rotate-180': !open }" 
+                         fill="none" 
+                         stroke="currentColor" 
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </span>
+            </button>
+
+            <!-- Chart Options Drop-up Menu -->
+            <div x-show="open"
+                 x-transition:enter="transition ease-out duration-100"
+                 x-transition:enter-start="transform opacity-0 scale-95"
+                 x-transition:enter-end="transform opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-75"
+                 x-transition:leave-start="transform opacity-100 scale-100"
+                 x-transition:leave-end="transform opacity-0 scale-95"
+                 class="absolute bottom-full left-0 mb-1 w-36 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                 style="transform-origin: bottom left">
+                <div class="py-1">
+                    <button class="chart-option"
+                            hx-get="@{/api/query/chart/line}"
+                            hx-target="#chartContainer"
+                            @click="open = false">
+                        <span class="flex items-center text-blue-600 hover:text-blue-700">
+                            <svg class="h-3 w-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                            </svg>
+                            Line Chart
+                        </span>
+                    </button>
+                    <button class="chart-option"
+                            hx-get="@{/api/query/chart/bar}"
+                            hx-target="#chartContainer"
+                            @click="open = false">
+                        <span class="flex items-center text-blue-600 hover:text-blue-700">
+                            <svg class="h-3 w-3 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            Bar Chart
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden iframe for downloads -->
+    <iframe id="download-frame" class="hidden"></iframe>
+
+    <!-- Chart Container -->
+    <div id="chartContainer" class="mt-4 hidden bg-white rounded-lg shadow-sm p-4">
+        <!-- Chart will be rendered here -->
+    </div>
+
+    <style>
+        .action-link {
+            @apply inline-flex items-center hover:opacity-80 focus:outline-none focus:ring-1 focus:ring-offset-1 focus:ring-gray-200 rounded px-1 py-0.5 transition-all duration-200 relative;
+        }
+
+        .favorite-btn {
+            @apply hover:bg-amber-50;
+        }
+
+        .favorite-btn.favorited {
+            @apply text-amber-600;
+        }
+
+        /* SQL Preview Panel Styles */
+        pre {
+            @apply scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-gray-700 max-h-60 overflow-auto;
+        }
+
+        /* Custom scrollbar for SQL preview */
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            @apply bg-gray-700 rounded;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            @apply bg-gray-600 rounded hover:bg-gray-500;
+        }
+
+        /* Save Modal Styles */
+        .modal-backdrop {
+            @apply fixed inset-0 bg-black bg-opacity-50 z-40;
+        }
+
+        .modal-content {
+            @apply fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl z-50 w-full max-w-md;
+        }
+
+        .query-result {
+            @apply transition-all duration-200;
+        }
+
+        .results-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* Sticky header styles */
+        thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom scrollbar */
+        .results-content {
+            @apply scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100;
+        }
+
+        .results-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .results-content::-webkit-scrollbar-track {
+            @apply bg-gray-100 rounded;
+        }
+
+        .results-content::-webkit-scrollbar-thumb {
+            @apply bg-gray-300 rounded hover:bg-gray-400;
+        }
+
+        /* Row hover effect */
+        tbody tr:hover {
+            @apply bg-gray-50;
+        }
+
+        /* Empty state */
+        .empty-state {
+            @apply text-center py-8 text-gray-500 text-sm;
+        }
+
+        /* Alternative decorative version with left border */
+        .question-section-alt {
+            @apply mb-3 pl-4 border-l-4 border-blue-400 bg-gradient-to-r from-blue-50 to-transparent;
+        }
+
+        /* Alternative version with top decoration */
+        .question-section-top {
+            @apply mb-3 pt-4 border-t-2 border-blue-400 bg-blue-50;
+        }
+
+    </style>
+
+    <!-- Add this script to ensure proper positioning -->
+    <script>
+        // Ensure proper positioning of drop-up menu
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('chartMenu', () => ({
+                open: false,
+                init() {
+                    this.$watch('open', value => {
+                        if (value) {
+                            // Ensure menu is visible within viewport
+                            this.$nextTick(() => {
+                                const menu = this.$refs.menu;
+                                const rect = menu.getBoundingClientRect();
+                                if (rect.top < 0) {
+                                    menu.style.bottom = 'auto';
+                                    menu.style.top = '100%';
+                                    menu.style.marginTop = '4px';
+                                    menu.style.marginBottom = '0';
+                                }
+                            });
+                        }
+                    });
+                }
+            }));
+        });
+
+        // Disable HTMX auto-scroll
+        htmx.config.scrollIntoViewOnBoost = false;
+        
+        // Initialize Alpine.js component
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('queryResult', () => ({
+                isCollapsed: false,
+                init() {
+                    // Ensure scroll position stays at top
+                    this.$nextTick(() => {
+                        this.$el.querySelector('.results-content').scrollTop = 0;
+                    });
+                }
+            }));
+        });
+
+        // Handle SQL toggle globally
+        window.addEventListener('toggle-sql', () => {
+            // Implementation for SQL preview
+        });
+
+
+
+        // Add handling for long text content
+        document.addEventListener('DOMContentLoaded', function() {
+            const cells = document.querySelectorAll('td');
+            cells.forEach(cell => {
+                if (cell.offsetWidth < cell.scrollWidth) {
+                    cell.classList.add('truncated-cell');
+                    cell.setAttribute('data-full-text', cell.textContent);
+                }
+            });
+        });
+    </script>
+
+    <!-- Save Query Modal -->
+    <div x-data="{ open: false }"
+         @open-save-modal.window="open = true"
+         x-show="open"
+         class="modal-backdrop"
+         x-cloak>
+        <div class="modal-content p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Save Query</h3>
+            <form hx-post="/api/query/save"
+                  hx-target="#save-result"
+                  class="space-y-4">
+                <input type="hidden" name="queryId" th:value="${queryId}">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" 
+                           name="name" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description"
+                              rows="3"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button"
+                            @click="open = false"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700">
+                        Save
+                    </button>
+                </div>
+            </form>
+            <div id="save-result"></div>
         </div>
     </div>
 </body>

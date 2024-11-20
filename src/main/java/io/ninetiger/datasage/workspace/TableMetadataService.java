@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import io.ninetiger.datasage.dbconfig.DatabaseConfig;
 import io.ninetiger.datasage.dbconfig.DatabaseConfigService;
+import io.ninetiger.datasage.repository.QueryLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -25,6 +26,8 @@ public class TableMetadataService {
 
     private final WorkspaceService workspaceService;
     private final DatabaseConfigService databaseConfigService;
+
+    private final QueryLogRepository queryLogRepository;
 
     Map<String, String> jdbcUrlTemplateMap = Map.of("postgresql", "jdbc:postgresql://%s:%d/%s"
     , "mysql", "jdbc:mysql://%s:%d/%s"

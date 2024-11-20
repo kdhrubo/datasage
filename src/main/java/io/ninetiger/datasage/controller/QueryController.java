@@ -15,6 +15,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @Controller
 @RequestMapping("/query")
 @Slf4j
@@ -43,7 +45,9 @@ public class QueryController {
 
             QueryResult result = queryBuilderService.executeNaturalLanguageQuery(jdbcTemplate, question, schemaInfo);
 
-            model.addAttribute("sqlQuery", result.sqlQuery());
+            // Add timestamp
+            model.addAttribute("timestamp", LocalDateTime.now());
+            model.addAttribute("question", question);
             model.addAttribute("results", result.results());
 
             if (result.results().isEmpty()) {
