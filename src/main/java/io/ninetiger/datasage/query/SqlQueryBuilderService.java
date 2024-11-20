@@ -1,8 +1,10 @@
 package io.ninetiger.datasage.query;
 
+import io.ninetiger.datasage.entity.QueryLog;
 import io.ninetiger.datasage.exception.InvalidQueryRequestException;
 import io.ninetiger.datasage.exception.QueryProcessingException;
 import io.ninetiger.datasage.exception.UnsafeQueryException;
+import io.ninetiger.datasage.repository.QueryLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,10 +32,12 @@ public class SqlQueryBuilderService {
     private final ChatClient chatClient;
     private final SqlSecurityChecker securityChecker;
 
+    private final QueryLogRepository queryLogRepository;
+
     @Value("classpath:prompts/sql-system-prompt.txt") Resource systemPromptResource;
     @Value("classpath:prompts/sql-user-prompt.txt") Resource userPromptResource;
 
-    public QueryResult executeNaturalLanguageQuery(JdbcTemplate jdbcTemplate, String question, String schemaInfo) {
+    public QueryResult executeNaturalLanguageQuery(JdbcTemplate jdbcTemplate, String question, String schemaInfo, String workspaceId) {
         try {
             // Generate SQL query from natural language
             String sqlQuery = generateSqlQuery(question, schemaInfo);
@@ -42,7 +46,13 @@ public class SqlQueryBuilderService {
             if (!isQuerySafe(sqlQuery)) {
                 throw new UnsafeQueryException("Generated query failed security checks");
             }
-            
+
+            QueryLog queryLog = new QueryLog();
+            queryLog.setNaturalQuery(question);
+            queryLog.setSqlQuery(sqlQuery);
+            queryLog.setWorkspaceId(workspaceId);
+            queryLogRepository.save(queryLog);
+
             // Execute the query
             List<Map<String, Object>> results = executeQuery(jdbcTemplate, sqlQuery);
             

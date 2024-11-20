@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -27,7 +28,7 @@ public class TableMetadataService {
     private final WorkspaceService workspaceService;
     private final DatabaseConfigService databaseConfigService;
 
-    private final QueryLogRepository queryLogRepository;
+    private Map<String,String> schemaInfo = new ConcurrentHashMap<>();
 
     Map<String, String> jdbcUrlTemplateMap = Map.of("postgresql", "jdbc:postgresql://%s:%d/%s"
     , "mysql", "jdbc:mysql://%s:%d/%s"
@@ -231,9 +232,18 @@ public class TableMetadataService {
     }
 
     public String getWorkspaceSchemaInfo(String workspaceId) {
+
+        if(this.schemaInfo.containsKey(workspaceId)) {
+            return this.schemaInfo.get(workspaceId);
+        }
+
         List<TableMetadata> tableMetadata = getAllTablesMetadata(workspaceId);
 
-        return formatSchemaInfoForLLM(tableMetadata);
+        String schemaInfo = formatSchemaInfoForLLM(tableMetadata);
+
+        this.schemaInfo.put(workspaceId, schemaInfo);
+
+        return schemaInfo;
     }
 
     private String formatSchemaInfoForLLM(List<TableMetadata> tables) {
@@ -308,13 +318,7 @@ public class TableMetadataService {
             schema.append("\n");
         }
 
-        // Add common query examples
-        //schema.append("Query Guidelines:\n");
-        //schema.append("1. Always use table aliases for clarity (e.g., 'users u')\n");
-        //schema.append("2. Qualify column names with table aliases (e.g., 'u.user_id')\n");
-        //schema.append("3. Use proper JOIN syntax with ON conditions\n");
-        //schema.append("4. Include appropriate WHERE clauses for filtering\n");
-        //schema.append("5. Avoid SELECT *; specify needed columns\n");
+
 
         return schema.toString();
     }

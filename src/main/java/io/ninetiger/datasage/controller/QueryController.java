@@ -43,7 +43,7 @@ public class QueryController {
 
             JdbcTemplate jdbcTemplate = tableMetadataService.createJdbcTemplate(workspaceId);
 
-            QueryResult result = queryBuilderService.executeNaturalLanguageQuery(jdbcTemplate, question, schemaInfo);
+            QueryResult result = queryBuilderService.executeNaturalLanguageQuery(jdbcTemplate, question, schemaInfo, workspaceId);
 
             // Add timestamp
             model.addAttribute("timestamp", LocalDateTime.now());
