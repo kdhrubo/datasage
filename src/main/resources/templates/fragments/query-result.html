@@ -51,10 +51,14 @@
              x-transition:leave="transition ease-in duration-150"
              x-transition:leave-start="opacity-100 transform translate-y-0"
              x-transition:leave-end="opacity-0 transform -translate-y-2"
-             class="results-content p-3">
+             class="results-content p-3"
+             x-init="$nextTick(() => { $el.scrollTop = 0; })"
+             @htmx:afterSwap="$el.scrollTop = 0">
             
             <!-- Results Table -->
-            <div class="overflow-x-auto" th:if="${not #lists.isEmpty(results)}">
+            <div class="overflow-x-auto"
+                 th:if="${not #lists.isEmpty(results)}"
+                 x-init="$nextTick(() => { $el.closest('.results-content').scrollTop = 0; })">
                 <table class="min-w-full divide-y divide-gray-200">
                     <!-- Table Headers -->
                     <thead class="bg-gray-50">
@@ -336,14 +340,16 @@
             @apply text-center py-8 text-gray-500 text-sm;
         }
 
-        /* Alternative decorative version with left border */
-        .question-section-alt {
-            @apply mb-3 pl-4 border-l-4 border-blue-400 bg-gradient-to-r from-blue-50 to-transparent;
+        /* Prevent auto-scroll behavior */
+        .results-content {
+            scroll-behavior: auto !important;
+            max-height: 500px;
+            overflow-y: auto;
         }
 
-        /* Alternative version with top decoration */
-        .question-section-top {
-            @apply mb-3 pt-4 border-t-2 border-blue-400 bg-blue-50;
+        /* Disable HTMX auto-scroll */
+        .htmx-settling {
+            scroll-behavior: auto !important;
         }
 
     </style>
@@ -404,6 +410,69 @@
                 if (cell.offsetWidth < cell.scrollWidth) {
                     cell.classList.add('truncated-cell');
                     cell.setAttribute('data-full-text', cell.textContent);
+                }
+            });
+        });
+    </script>
+
+
+    <script>
+        // Disable HTMX auto-scroll
+        htmx.config.scrollIntoViewOnBoost = false;
+        htmx.config.scrollIntoView = false;
+
+        // Initialize Alpine.js component with scroll control
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('queryResult', () => ({
+                isCollapsed: false,
+                init() {
+                    // Reset scroll position when component initializes
+                    this.$nextTick(() => {
+                        const resultsContent = this.$el.querySelector('.results-content');
+                        if (resultsContent) {
+                            resultsContent.scrollTop = 0;
+                        }
+                    });
+
+                    // Watch for content changes
+                    const observer = new MutationObserver(() => {
+                        const resultsContent = this.$el.querySelector('.results-content');
+                        if (resultsContent) {
+                            resultsContent.scrollTop = 0;
+                        }
+                    });
+
+                    // Observe content changes
+                    observer.observe(this.$el, {
+                        childList: true,
+                        subtree: true
+                    });
+                }
+            }));
+        });
+
+        // Handle scroll reset after HTMX swaps
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.classList.contains('results-content')) {
+                evt.detail.target.scrollTop = 0;
+            }
+        });
+
+        // Handle scroll reset after HTMX loads
+        document.body.addEventListener('htmx:load', function(evt) {
+            const resultsContent = evt.detail.elt.querySelector('.results-content');
+            if (resultsContent) {
+                resultsContent.scrollTop = 0;
+            }
+        });
+
+        // Ensure scroll position is maintained during transitions
+        document.addEventListener('alpine:initializing', () => {
+            Alpine.store('scroll', {
+                resetScroll(element) {
+                    if (element) {
+                        element.scrollTop = 0;
+                    }
                 }
             });
         });

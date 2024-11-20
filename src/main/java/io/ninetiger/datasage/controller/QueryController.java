@@ -49,6 +49,8 @@ public class QueryController {
             model.addAttribute("timestamp", LocalDateTime.now());
             model.addAttribute("question", question);
             model.addAttribute("results", result.results());
+            // Add anti-scroll attribute
+            model.addAttribute("preventScroll", true);
 
             if (result.results().isEmpty()) {
                 return "fragments/query-result :: no-results";
